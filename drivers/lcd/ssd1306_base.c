@@ -1151,7 +1151,7 @@ static int ssd1306_configuredisplay(struct ssd1306_dev_s *priv)
       return ret;
     }
 
-#if 0
+#if 1
   ret = ssd1306_sendbyte(priv, SSD1306_SCANTOCOM0);     /* Com scan direction: Scan from COM[n-1] to COM[0] (Can ignore) */
   if (ret < 0)
     {

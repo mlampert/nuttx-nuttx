@@ -73,4 +73,9 @@ ifeq ($(CONFIG_STM32F7_BBSRAM),y)
 CSRCS += stm32_bbsram.c
 endif
 
+ifeq ($(CONFIG_LCD_SSD1306_I2C),y)
+CSRCS += stm32_ssd1306.c
+endif
+
+
 include $(TOPDIR)/configs/Board.mk

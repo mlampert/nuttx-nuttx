@@ -49,6 +49,10 @@
 #include "nucleo-144.h"
 #include <nuttx/leds/userled.h>
 
+#ifdef CONFIG_VIDEO_FB
+#  include <nuttx/video/fb.h>
+#endif
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -145,6 +149,17 @@ int board_app_initialize(uintptr_t arg)
   if (ret != OK)
     {
       ferr("ERROR: Failed to initialize MMC/SD driver: %d\n", ret);
+      return ret;
+    }
+#endif
+
+#ifdef CONFIG_VIDEO_FB
+  /* Initialize and register the framebuffer driver */
+
+  ret = fb_register(0, 0);
+  if (ret < 0)
+    {
+      ferr("ERROR: fb_register() failed: %d\n", ret);
       return ret;
     }
 #endif
