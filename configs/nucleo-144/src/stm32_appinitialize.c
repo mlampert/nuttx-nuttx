@@ -159,7 +159,16 @@ int board_app_initialize(uintptr_t arg)
   ret = fb_register(0, 0);
   if (ret < 0)
     {
-      ferr("ERROR: fb_register() failed: %d\n", ret);
+      syslog(LOG_ERR, "ERROR: fb_register() failed: %d\n", ret);
+      return ret;
+    }
+#endif
+
+#ifdef CONFIG_SENSORS_VL53L0X
+  ret = stm32_vl53l0x_initialize("/dev/vl53l0x0");
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: Failed to initialize vl53l0x driver: %d\n", ret);
       return ret;
     }
 #endif

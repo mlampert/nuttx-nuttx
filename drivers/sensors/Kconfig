@@ -704,3 +704,21 @@ config XEN1210_REGDEBUG
 config SENSORS_ZEROCROSS
 	bool "Zero Cross Sensor"
 	default n
+
+config SENSORS_VL53L0X
+	bool "VL53L0X time of flight sensor"
+	default n
+	select I2C
+	---help---
+		Enable driver support for the ST VL53L0x time of flight distance sensor.
+
+if SENSORS_VL53L0X
+
+config SENSORS_VL53L0X_USE_I2C_2V8
+	bool "I2C interface at 2.8V"
+	default y
+	---help---
+		If not set I2C is running at 1.8V.
+
+endif # SENSORS_VL53L0X
+

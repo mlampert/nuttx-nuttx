@@ -177,6 +177,22 @@ ifeq ($(CONFIG_SENSORS_T67XX),y)
   CSRCS += t67xx.c
 endif
 
+ifeq ($(CONFIG_SENSORS_VL53L0X),y)
+  CSRCS += vl53l0x_api.c
+  CSRCS += vl53l0x_api_calibration.c
+  CSRCS += vl53l0x_api_core.c
+  CSRCS += vl53l0x_api_ranging.c
+  CSRCS += vl53l0x_api_strings.c
+  CSRCS += vl53l0x_platform.c
+  CSRCS += vl53l0x_platform_nx.c
+  CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(TOPDIR)$(DELIM)drivers$(DELIM)sensors$(DELIM)vl53l0x$(DELIM)core$(DELIM)inc}
+  CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(TOPDIR)$(DELIM)drivers$(DELIM)sensors$(DELIM)vl53l0x$(DELIM)platform$(DELIM)inc}
+  VPATH += :sensors$(DELIM)vl53l0x$(DELIM)core$(DELIM)src
+  VPATH += :sensors$(DELIM)vl53l0x$(DELIM)platform$(DELIM)src
+  EXTRA_LIBPATHS += -L "$(TOPDIR)$(DELIM)drivers$(DELIM)sensors$(DELIM)vl53l0x$(DELIM)core$(DELIM)src"
+  EXTRA_LIBPATHS += -L "$(TOPDIR)$(DELIM)drivers$(DELIM)sensors$(DELIM)vl53l0x$(DELIM)platform$(DELIM)src"
+endif
+
 endif # CONFIG_I2C
 
 # These drivers depend on SPI support

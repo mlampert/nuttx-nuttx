@@ -77,5 +77,8 @@ ifeq ($(CONFIG_LCD_SSD1306_I2C),y)
 CSRCS += stm32_ssd1306.c
 endif
 
+ifeq ($(CONFIG_SENSORS_VL53L0X),y)
+CSRCS += stm32_vl53l0x.c
+endif
 
 include $(TOPDIR)/configs/Board.mk

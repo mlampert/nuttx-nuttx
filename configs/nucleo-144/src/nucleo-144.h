@@ -275,5 +275,13 @@ int stm32_adc_setup(void);
 int stm32_bbsram_int(void);
 #endif
 
+/************************************************************************************
+ * Name: stm32_vl53l0x_initialize
+ ************************************************************************************/
+
+#ifdef CONFIG_SENSORS_VL53L0X
+int stm32_vl53l0x_initialize(FAR const char *devpath);
+#endif
+
 #endif /* __ASSEMBLY__ */
 #endif /* __CONFIGS_NUCLEO_144_SRC_NUCLEO_144_H */
