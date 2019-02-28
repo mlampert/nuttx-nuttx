@@ -67,6 +67,16 @@ typedef struct VL53L0X_ioctl_s {
 #define VL53L0X_IOCTL_ERROR_INVALID_PROFILE                   -220
 #define VL53L0X_IOCTL_ERROR_INVALID_RANGING_MODE              -221
 
+/* Each read results in the following structure being returned */
+typedef struct VL53L0X_data_s {
+	uint16_t  range;
+	uint16_t  maxRange;
+	float     reflectance;
+	float     ambientLight;
+	uint16_t  spadCount;
+	uint8_t   zoneId;
+	uint8_t   status;
+} VL53L0X_data_t;
 
 #ifdef __cplusplus
 #define EXTERN extern "C"
