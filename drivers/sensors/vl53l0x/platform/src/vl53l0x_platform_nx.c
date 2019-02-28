@@ -94,18 +94,6 @@ static void print_pal_error(const char *label, VL53L0X_Error rc)
 #endif
 }
 
-static void print_range_status(const char *label, VL53L0X_RangingMeasurementData_t *data)
-{
-  char buf[VL53L0X_MAX_STRING_LENGTH];
-
-  VL53L0X_GetRangeStatusString(data->RangeStatus, buf);
-#if VL53L0X_DEBUG
-  syslog(LOG_ERR, "%s: %i - %s\n", label, data->RangeStatus, buf);
-#else
-  snerr("%s: %i - %s\n", label, data->RangeStatus, buf);
-#endif
-}
-
 static int vl53l0x_open(FAR struct file *fp)
 {
 #if 0
@@ -128,8 +116,9 @@ static ssize_t vl53l0x_read(FAR struct file *fp, FAR char *buf, size_t len)
 {
   int ret;
   VL53L0X_RangingMeasurementData_t measurement;
+  VL53L0X_data_t data;
   FAR VL53L0X_DEV priv = (FAR VL53L0X_DEV)(fp->f_inode->i_private);
-  syslog(LOG_INFO, "vl5310x_read(%d)\n", len);
+  //syslog(LOG_DEBUG, "vl5310x_read(%d)\n", len);
 
 #if 0
   {
@@ -144,18 +133,20 @@ static ssize_t vl53l0x_read(FAR struct file *fp, FAR char *buf, size_t len)
     print_pal_error("ranging failed", ret);
     return 0;
   }
-  if (measurement.RangeStatus != 0) {
-    print_range_status("vl53l0x_read", &measurement);
-    return 0;
-  }
+  data.range            = measurement.RangeMilliMeter;
+  data.maxRange         = measurement.RangeDMaxMilliMeter;
+  data.reflectance      = measurement.SignalRateRtnMegaCps  / 65536.0f;
+  data.ambientLight     = measurement.AmbientRateRtnMegaCps / 65536.0f;
+	data.spadCount        = measurement.EffectiveSpadRtnCount;
+  data.zoneId           = measurement.ZoneId;
+	data.status           = measurement.RangeStatus;
 
-  if (len > sizeof(measurement.RangeMilliMeter))
+  if (len > sizeof(data))
   {
-    len = sizeof(measurement.RangeMilliMeter);
+    len = sizeof(data);
   }
 
-  syslog(LOG_ERR, "vl5310x_read: %d\n", len);
-  memcpy(buf, &measurement.RangeMilliMeter, len);
+  memcpy(buf, &data, len);
   fp->f_pos += len;
   return len;
 }
