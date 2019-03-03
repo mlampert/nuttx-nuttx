@@ -67,11 +67,9 @@ static void dump_parameters(FAR VL53L0X_DEV priv)
   ret = VL53L0X_GetDeviceParameters(priv, &param);
   if (ret == VL53L0X_ERROR_NONE)
   {
-    uint32_t timing;
-    ret = VL53L0X_GetMeasurementTimingBudgetMicroSeconds(priv, &timing);
     syslog(LOG_INFO, "Device Parameters:\n");
     syslog(LOG_INFO, "               mode : %d.%d\n", param.DeviceMode, param.HistogramMode);
-    syslog(LOG_INFO, "             timing : %d + %d  (%d)\n", param.MeasurementTimingBudgetMicroSeconds, param.InterMeasurementPeriodMilliSeconds * 1000, timing);
+    syslog(LOG_INFO, "             timing : %d + %d\n", param.MeasurementTimingBudgetMicroSeconds, param.InterMeasurementPeriodMilliSeconds * 1000);
     syslog(LOG_INFO, "         xtalk comp : %d - %dmm %dMCps\n", param.XTalkCompensationEnable, param.XTalkCompensationRangeMilliMeter, param.XTalkCompensationRateMegaCps);
     syslog(LOG_INFO, "       range offset : %dum\n", param.RangeOffsetMicroMeters);
     for (int i=0; i< VL53L0X_CHECKENABLE_NUMBER_OF_CHECKS; ++i) {
@@ -82,17 +80,9 @@ static void dump_parameters(FAR VL53L0X_DEV priv)
     syslog(LOG_INFO, "   vcsel period pre : %d\n", period);
     ret = VL53L0X_GetVcselPulsePeriod(priv, VL53L0X_VCSEL_PERIOD_FINAL_RANGE, &period);
     syslog(LOG_INFO, " vcsel period final : %d\n", period);
-
-    syslog(LOG_INFO, "   timing : %d - %d\n", priv->Data.CurrentParameters.MeasurementTimingBudgetMicroSeconds, priv->Data.DeviceSpecificParameters.FinalRangeVcselPulsePeriod);
   } else {
     syslog(LOG_ERR, "get device parametes failed: %d\n", ret);
   }
-
-  syslog(LOG_INFO, " - sigmaFinalRange      : %d - %08x\n", priv->nx.init.sigmaFinalRange.enable, priv->nx.init.sigmaFinalRange.value);
-  syslog(LOG_INFO, " - signalRateFinalRange : %d - %08x\n", priv->nx.init.signalRateFinalRange.enable, priv->nx.init.signalRateFinalRange.value);
-  syslog(LOG_INFO, " - rangeIgnoreThreshold : %d - %08x\n", priv->nx.init.rangeIgnoreThreshold.enable, priv->nx.init.rangeIgnoreThreshold.value);
-  syslog(LOG_INFO, " - timing               : %d\n", priv->nx.init.measurementTimingBudget);
-  syslog(LOG_INFO, " - vcsel                : %d / %d\n", priv->nx.init.vcselPeriodPreRange, priv->nx.init.vcselPeriodFinalRange);
 }
 
 /****************************************************************************
