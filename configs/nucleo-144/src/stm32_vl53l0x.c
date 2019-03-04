@@ -11,6 +11,11 @@
 #if defined (CONFIG_I2C) && defined(CONFIG_SENSORS_VL53L0X)
 #define VL53L0X_I2C_DEV  1  /* I2C1 */
 
+#if 0
+# define VL53L0X_I2C_SPEED VL53L0X_I2C_FREQ
+#else
+# define VL53L0X_I2C_SPEED I2C_SPEED_STANDARD
+#endif
 
 int stm32_vl53l0x_initialize(FAR const char *devpath)
 {
@@ -26,7 +31,7 @@ int stm32_vl53l0x_initialize(FAR const char *devpath)
     return -ENODEV;
   }
 
-  ret = VL53L0X_register(devpath, i2c, VL53L0X_I2C_ADDR, VL53L0X_I2C_FREQ);
+  ret = VL53L0X_register(devpath, i2c, VL53L0X_I2C_ADDR, VL53L0X_I2C_SPEED);
   if (ret < 0)
   {
     snerr("ERROR: Failed registering VL53L0X (%s) - %d\n", devpath, ret);

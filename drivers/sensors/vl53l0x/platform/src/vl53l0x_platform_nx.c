@@ -10,7 +10,7 @@
 #include <nuttx/sensors/vl53l0x.h>
 
 
-#define VL53L0X_DEBUG 1
+#define VL53L0X_DEBUG 0
 
 static const VL53L0X_nx_profile_values_t VL53L0X_Profile[] = {
   /* Default */
@@ -262,7 +262,9 @@ static int vl53l0x_ioctl(FAR struct file *fp, int cmd, unsigned long param)
   uint8_t byte0, byte1;
   uint32_t uval;
 
-  syslog(LOG_INFO, "vl5310x_ioctl(%04X)\n", cmd);
+#if VL53L0X_DEBUG
+  syslog(LOG_INFO, "vl5310x_ioctl(%04X.%04X)\n", cmd, arg->val);
+#endif
 
   switch (cmd & VL53L0X_IOCTL_CMD_MASK)
   {
@@ -294,7 +296,9 @@ static int vl53l0x_ioctl(FAR struct file *fp, int cmd, unsigned long param)
         {
           break;
         }
+#if VL53L0X_DEBUG
         syslog(LOG_INFO, "vl5310x successfully reset\n");
+#endif
       } else {
         arg->ret = VL53L0X_IOCTL_ERROR_READ_NOT_SUPPORTED;
         ret = -EINVAL;
@@ -574,14 +578,14 @@ int VL53L0X_register(FAR const char *devpath, FAR struct i2c_master_s *i2c, uint
   priv->nx.init.vcselPeriodFinalRange   = priv->Data.DeviceSpecificParameters.FinalRangeVcselPulsePeriod;
   priv->nx.init.measurementTimingBudget = priv->Data.CurrentParameters.MeasurementTimingBudgetMicroSeconds;
 
-  dump_parameters(priv);
+  //dump_parameters(priv);
 
   ioctl.val = VL53L0X_PROFILE_DEFAULT | VL53L0X_PROFILE_MODE_SINGLE;
   ret = VL53L0X_setup_profile(priv, &ioctl);
   ERR_OUT_IF_RET(ret, "ioctl");
   ERR_OUT_IF_RET(ioctl.ret, "ioctl ret");
 
-  dump_parameters(priv);
+  //dump_parameters(priv);
 
   ret = register_driver(devpath, &vl53l0x_fops, 0666, priv);
   if (ret < 0)
