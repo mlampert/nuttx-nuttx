@@ -12,36 +12,41 @@
 
 #define VL53L0X_DEBUG 0
 
-static const VL53L0X_nx_profile_values_t VL53L0X_Profile[] = {
+static const VL53L0X_profile_t VL53L0X_Profile[] =
+{
   /* Default */
   {
-    { 1, 0 },
-    { 1, 0 },
-    { 1, (FixPoint1616_t)(1.5*0.023*65536) },
+    (VL53L0X_CHECK_ENABLE_SIGMA_FINAL_RANGE | VL53L0X_CHECK_ENABLE_SIGNAL_RATE_FINAL_RANGE | VL53L0X_CHECK_ENABLE_RANGE_IGN_THRESHOLD),
+    0,
+    0,
+    (FixPoint1616_t)(1.5*0.023*65536),
     0,
     0, 0
   },
   /* Long Range */
   {
-    { 1, (FixPoint1616_t)(60*65536) },
-    { 1, (FixPoint1616_t)(65536/10) },
-    { 0, 0 },
+    (VL53L0X_CHECK_ENABLE_SIGMA_FINAL_RANGE | VL53L0X_CHECK_ENABLE_SIGNAL_RATE_FINAL_RANGE),
+    (FixPoint1616_t)(60*65536),
+    (FixPoint1616_t)(65536/10),
+    0,
     33000,
     18, 14
   },
   /* High Speed */
   {
-    { 1, (FixPoint1616_t)(32*65536) },
-    { 1, (FixPoint1616_t)(25*65536/100) },
-    { 0, 0 },
+    (VL53L0X_CHECK_ENABLE_SIGMA_FINAL_RANGE | VL53L0X_CHECK_ENABLE_SIGNAL_RATE_FINAL_RANGE),
+    (FixPoint1616_t)(32*65536),
+    (FixPoint1616_t)(25*65536/100),
+    0,
     30000,
     0, 0
   },
   /* High Accuracy */
   {
-    { 1, (FixPoint1616_t)(18*65536) },
-    { 1, (FixPoint1616_t)(25*65536/100) },
-    { 0, 0 }, 
+    (VL53L0X_CHECK_ENABLE_SIGMA_FINAL_RANGE | VL53L0X_CHECK_ENABLE_SIGNAL_RATE_FINAL_RANGE),
+    (FixPoint1616_t)(18*65536),
+    (FixPoint1616_t)(25*65536/100),
+    0, 
     200000,
     0, 0
   }
@@ -58,6 +63,7 @@ static const VL53L0X_nx_profile_values_t VL53L0X_Profile[] = {
 #define VERSION_REQUIRED_MINOR      0
 #define VERSION_REQUIRED_BUILD      2
 
+static void dump_parameters(FAR VL53L0X_DEV priv) __attribute__((unused));
 static void dump_parameters(FAR VL53L0X_DEV priv)
 {
   int ret;
@@ -162,8 +168,8 @@ static ssize_t vl53l0x_read(FAR struct file *fp, FAR char *buf, size_t len)
   }
   data.range            = measurement.RangeMilliMeter;
   data.maxRange         = measurement.RangeDMaxMilliMeter;
-  data.reflectance      = measurement.SignalRateRtnMegaCps  / 65536.0f;
-  data.ambientLight     = measurement.AmbientRateRtnMegaCps / 65536.0f;
+  data.reflectance      = measurement.SignalRateRtnMegaCps;
+  data.ambientLight     = measurement.AmbientRateRtnMegaCps;
 	data.spadCount        = measurement.EffectiveSpadRtnCount;
   data.zoneId           = measurement.ZoneId;
 	data.status           = measurement.RangeStatus;
@@ -185,37 +191,36 @@ static ssize_t vl53l0x_read(FAR struct file *fp, FAR char *buf, size_t len)
         return OK;                          \
       }
 
-#define VL53L0X_SETUP_LIMIT_CHECK(ARG, PRIV, PRF, LIMIT, MEMBER)                                          \
-      VL53L0X_SETUP(ARG, VL53L0X_SetLimitCheckEnable(PRIV, LIMIT, VL53L0X_Profile[PRF].MEMBER.enable));   \
-      if (VL53L0X_Profile[PRF].MEMBER.enable && VL53L0X_Profile[PRF].MEMBER.value)                        \
-      {                                                                                                   \
-        VL53L0X_SETUP(ARG, VL53L0X_SetLimitCheckValue(PRIV, LIMIT, VL53L0X_Profile[PRF].MEMBER.value));   \
-      } else {                                                                                            \
-        VL53L0X_SETUP(ARG, VL53L0X_SetLimitCheckValue(PRIV, LIMIT, PRIV->nx.init.MEMBER.value));          \
+#define VL53L0X_SETUP_LIMIT_CHECK(ARG, PRIV, PROFILE, FLAG, LIMIT, MEMBER)                                                        \
+      VL53L0X_SETUP(ARG, VL53L0X_SetLimitCheckEnable(PRIV, LIMIT, (PROFILE->checkEnable & FLAG) ? 0x01 : 0x00));  \
+      if ((PROFILE->checkEnable & FLAG) && PROFILE->MEMBER)                                            \
+      {                                                                                                                       \
+        VL53L0X_SETUP(ARG, VL53L0X_SetLimitCheckValue(PRIV, LIMIT, PROFILE->MEMBER));                       \
+      } else {                                                                                                                \
+        VL53L0X_SETUP(ARG, VL53L0X_SetLimitCheckValue(PRIV, LIMIT, PRIV->nx.init.MEMBER));                              \
       }
 
-#define VL53L0X_SETUP_VALUE(ARG, PRIV, PRF, FUNC, MEMBER)             \
-      if (VL53L0X_Profile[PRF].MEMBER)                                \
+#define VL53L0X_SETUP_VALUE(ARG, PRIV, PROFILE, FUNC, MEMBER)             \
+      if (PROFILE->MEMBER)                                \
       {                                                               \
-        VL53L0X_SETUP(ARG, FUNC(PRIV, VL53L0X_Profile[PRF].MEMBER));  \
+        VL53L0X_SETUP(ARG, FUNC(PRIV, PROFILE->MEMBER));  \
       } else {                                                        \
         VL53L0X_SETUP(ARG, FUNC(PRIV, PRIV->nx.init.MEMBER));         \
       }
 
-#define VL53L0X_SETUP_VALUE2(ARG, PRIV, PRF, FUNC, VAL, MEMBER)             \
-      if (VL53L0X_Profile[PRF].MEMBER)                                      \
+#define VL53L0X_SETUP_VALUE2(ARG, PRIV, PROFILE, FUNC, VAL, MEMBER)             \
+      if (PROFILE->MEMBER)                                      \
       {                                                                     \
-        VL53L0X_SETUP(ARG, FUNC(PRIV, VAL, VL53L0X_Profile[PRF].MEMBER));   \
+        VL53L0X_SETUP(ARG, FUNC(PRIV, VAL, PROFILE->MEMBER));   \
       } else {                                                              \
         VL53L0X_SETUP(ARG, FUNC(PRIV, VAL, PRIV->nx.init.MEMBER));          \
       }
 
-static int VL53L0X_setup_profile(FAR VL53L0X_DEV priv, FAR VL53L0X_ioctl_t *arg)
+static int VL53L0X_set_profile(FAR VL53L0X_DEV priv, FAR VL53L0X_ioctl_t *arg, const FAR VL53L0X_profile_t *profile)
 {
-  uint16_t mod = arg->val & VL53L0X_PROFILE_MASK_MODE;
-  uint16_t prf = arg->val & VL53L0X_PROFILE_MASK_PROFILE;
+  uint16_t prf = arg->profile.id   & VL53L0X_PROFILE_MASK_PROFILE;
 
-  switch (mod)
+  switch (arg->profile.mode & VL53L0X_PROFILE_MASK_MODE)
   {
     case VL53L0X_PROFILE_MODE_SINGLE:
       VL53L0X_SETUP(arg, VL53L0X_SetDeviceMode(priv, VL53L0X_DEVICEMODE_SINGLE_RANGING));
@@ -237,12 +242,15 @@ static int VL53L0X_setup_profile(FAR VL53L0X_DEV priv, FAR VL53L0X_ioctl_t *arg)
     case VL53L0X_PROFILE_LONG_RANGE:
     case VL53L0X_PROFILE_HIGH_SPEED:
     case VL53L0X_PROFILE_HIGH_ACCURACY:
-      VL53L0X_SETUP_LIMIT_CHECK(arg, priv, prf, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, sigmaFinalRange);                                          \
-      VL53L0X_SETUP_LIMIT_CHECK(arg, priv, prf, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, signalRateFinalRange);                                          \
-      VL53L0X_SETUP_LIMIT_CHECK(arg, priv, prf, VL53L0X_CHECKENABLE_RANGE_IGNORE_THRESHOLD, rangeIgnoreThreshold);                                          \
-      VL53L0X_SETUP_VALUE(arg, priv, prf, VL53L0X_SetMeasurementTimingBudgetMicroSeconds, measurementTimingBudget);             \
-      VL53L0X_SETUP_VALUE2(arg, priv, prf, VL53L0X_SetVcselPulsePeriod, VL53L0X_VCSEL_PERIOD_PRE_RANGE, vcselPeriodPreRange);
-      VL53L0X_SETUP_VALUE2(arg, priv, prf, VL53L0X_SetVcselPulsePeriod, VL53L0X_VCSEL_PERIOD_FINAL_RANGE, vcselPeriodFinalRange);
+      profile = &VL53L0X_Profile[prf];
+      /* fall through */
+    case VL53L0X_PROFILE_CUSTOM:
+      VL53L0X_SETUP_LIMIT_CHECK(arg, priv, profile, VL53L0X_CHECK_ENABLE_SIGMA_FINAL_RANGE, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, sigmaFinalRange);
+      VL53L0X_SETUP_LIMIT_CHECK(arg, priv, profile, VL53L0X_CHECK_ENABLE_SIGNAL_RATE_FINAL_RANGE, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, signalRateFinalRange);
+      VL53L0X_SETUP_LIMIT_CHECK(arg, priv, profile, VL53L0X_CHECK_ENABLE_RANGE_IGN_THRESHOLD, VL53L0X_CHECKENABLE_RANGE_IGNORE_THRESHOLD, rangeIgnoreThreshold);
+      VL53L0X_SETUP_VALUE(arg, priv, profile, VL53L0X_SetMeasurementTimingBudgetMicroSeconds, measurementTimingBudget);
+      VL53L0X_SETUP_VALUE2(arg, priv, profile, VL53L0X_SetVcselPulsePeriod, VL53L0X_VCSEL_PERIOD_PRE_RANGE, vcselPeriodPreRange);
+      VL53L0X_SETUP_VALUE2(arg, priv, profile, VL53L0X_SetVcselPulsePeriod, VL53L0X_VCSEL_PERIOD_FINAL_RANGE, vcselPeriodFinalRange);
       break;
 
     default:
@@ -250,6 +258,55 @@ static int VL53L0X_setup_profile(FAR VL53L0X_DEV priv, FAR VL53L0X_ioctl_t *arg)
       return -EINVAL;
   }
 
+  return OK;
+}
+
+static void VL53L0X_safe_current_profile(FAR VL53L0X_DEV priv, FAR VL53L0X_profile_t *profile)
+{
+  profile->checkEnable =
+    (priv->Data.CurrentParameters.LimitChecksEnable[VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE] ? VL53L0X_CHECK_ENABLE_SIGMA_FINAL_RANGE : 0) |
+    (priv->Data.CurrentParameters.LimitChecksEnable[VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE] ? VL53L0X_CHECK_ENABLE_SIGNAL_RATE_FINAL_RANGE : 0) |
+    (priv->Data.CurrentParameters.LimitChecksEnable[VL53L0X_CHECKENABLE_RANGE_IGNORE_THRESHOLD] ? VL53L0X_CHECK_ENABLE_RANGE_IGN_THRESHOLD : 0);
+  profile->sigmaFinalRange         = priv->Data.CurrentParameters.LimitChecksValue[VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE];
+  profile->signalRateFinalRange    = priv->Data.CurrentParameters.LimitChecksValue[VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE];
+  profile->rangeIgnoreThreshold    = priv->Data.CurrentParameters.LimitChecksValue[VL53L0X_CHECKENABLE_RANGE_IGNORE_THRESHOLD];
+  profile->vcselPeriodPreRange     = priv->Data.DeviceSpecificParameters.PreRangeVcselPulsePeriod;
+  profile->vcselPeriodFinalRange   = priv->Data.DeviceSpecificParameters.FinalRangeVcselPulsePeriod;
+  profile->measurementTimingBudget = priv->Data.CurrentParameters.MeasurementTimingBudgetMicroSeconds;
+}
+
+
+static int VL53L0X_get_profile(FAR VL53L0X_DEV priv, FAR VL53L0X_ioctl_t *arg)
+{
+  uint16_t prf = arg->profile.id   & VL53L0X_PROFILE_MASK_PROFILE;
+
+  arg->ret = VL53L0X_GetDeviceMode(priv, &arg->profile.mode);
+  if (arg->ret != VL53L0X_ERROR_NONE)
+  {
+    return -EINVAL;
+  }
+
+  switch (prf)
+  {
+    case VL53L0X_PROFILE_DEFAULT:
+    case VL53L0X_PROFILE_LONG_RANGE:
+    case VL53L0X_PROFILE_HIGH_SPEED:
+    case VL53L0X_PROFILE_HIGH_ACCURACY:
+      memcpy(&arg->profile.param, &VL53L0X_Profile[prf], sizeof(VL53L0X_profile_t));
+      break;
+
+    case VL53L0X_PROFILE_CUSTOM:
+      VL53L0X_safe_current_profile(priv, &arg->profile.param);
+      break;
+
+    case VL53L0X_PROFILE_INITIAL:
+      memcpy(&arg->profile.param, &priv->nx.init, sizeof(VL53L0X_profile_t));
+      break;
+
+    default:
+      arg->ret = VL53L0X_IOCTL_ERROR_INVALID_PROFILE;
+      return -EINVAL;
+  }
   return OK;
 }
 
@@ -305,60 +362,74 @@ static int vl53l0x_ioctl(FAR struct file *fp, int cmd, unsigned long param)
       }
       break;
 
+    case VL53L0X_IOCTL_INFO:
+      if (write)
+      {
+        ret = VL53L0X_IOCTL_ERROR_WRITE_NOT_SUPPORTED;
+      } else {
+        VL53L0X_DeviceInfo_t info;
+        arg->ret = VL53L0X_GetDeviceInfo(priv, &info);
+        if (arg->ret == VL53L0X_ERROR_NONE)
+        {
+          memcpy(arg->info.name, info.Name,       sizeof(arg->info.name));
+          memcpy(arg->info.type, info.Type,       sizeof(arg->info.type));
+          memcpy(arg->info.id,   info.ProductId,  sizeof(arg->info.id));
+          arg->info.productType  = info.ProductType;
+          arg->info.versionMajor = info.ProductRevisionMajor;
+          arg->info.versionMinor = info.ProductRevisionMinor;
+        }
+      }
+      break;
+
     case VL53L0X_IOCTL_PROFILE:
       if (write)
       {
-        ret = VL53L0X_setup_profile(priv, arg);
+        ret = VL53L0X_set_profile(priv, arg, &arg->profile.param);
       } else {
-        arg->ret = VL53L0X_IOCTL_ERROR_READ_NOT_SUPPORTED;
-        ret = -EINVAL;
+        ret = VL53L0X_get_profile(priv, arg);
       }
       break;
 
     case VL53L0X_IOCTL_LIMIT_CHECK_ENABLE:
       if (write)
       {
-        arg->ret = VL53L0X_SetLimitCheckEnable(priv, arg->reg, arg->val);
+        arg->ret = VL53L0X_SetLimitCheckEnable(priv, arg->limit_check.reg, arg->limit_check.val);
       } else {
         uint8_t enabled = 0;
-        arg->ret = VL53L0X_GetLimitCheckEnable(priv, arg->reg, &enabled);
-        arg->val = enabled;
+        arg->ret = VL53L0X_GetLimitCheckEnable(priv, arg->limit_check.reg, &enabled);
+        arg->limit_check.val = enabled;
       }
       break;
 
     case VL53L0X_IOCTL_LIMIT_CHECK_VALUE:
       if (write)
       {
-        arg->ret = VL53L0X_SetLimitCheckValue(priv, arg->reg, (FixPoint1616_t)arg->val);
+        arg->ret = VL53L0X_SetLimitCheckValue(priv, arg->limit_check.reg, (FixPoint1616_t)arg->limit_check.val);
       } else {
         FixPoint1616_t fpoint = 0;
-        arg->ret = VL53L0X_GetLimitCheckValue(priv, arg->reg, &fpoint);
-        arg->val = fpoint;
+        arg->ret = VL53L0X_GetLimitCheckValue(priv, arg->limit_check.reg, &fpoint);
+        arg->limit_check.val = fpoint;
       }
       break;
 
     case VL53L0X_IOCTL_MEASURE_TIME_US:
       if (write)
       {
-        arg->ret = VL53L0X_SetMeasurementTimingBudgetMicroSeconds(priv, arg->val);
+        arg->ret = VL53L0X_SetMeasurementTimingBudgetMicroSeconds(priv, arg->timingBudget);
       } else {
-        arg->ret = VL53L0X_GetMeasurementTimingBudgetMicroSeconds(priv, &arg->val);
+        arg->ret = VL53L0X_GetMeasurementTimingBudgetMicroSeconds(priv, &arg->timingBudget);
       }
       break;
 
     case VL53L0X_IOCTL_VCSEL_PULSE_PERIOD:
       if (write)
       {
-        arg->ret = VL53L0X_SetVcselPulsePeriod(priv, arg->reg, arg->val);
+        arg->ret = VL53L0X_SetVcselPulsePeriod(priv, arg->limit_check.reg, arg->limit_check.val);
       } else {
         uint8_t period = 0;
-        arg->ret = VL53L0X_GetVcselPulsePeriod(priv, arg->reg, &period);
-        arg->val = period;
+        arg->ret = VL53L0X_GetVcselPulsePeriod(priv, arg->limit_check.reg, &period);
+        arg->limit_check.val = period;
       }
-      break;
-
-    case VL53L0X_IOCTL_DUMP_CONFIG:
-      dump_parameters(priv);
       break;
 
     default:
@@ -488,12 +559,6 @@ static void dump_status(FAR VL53L0X_DEV priv)
 #endif
 }
 
-static void VL53L0x_setup_limit_check(FAR VL53L0X_nx_limit_check_t *limit, FAR VL53L0X_DEV priv, uint8_t idx)
-{
-  limit->enable = priv->Data.CurrentParameters.LimitChecksEnable[idx];
-  limit->value  = priv->Data.CurrentParameters.LimitChecksValue[idx];
-}
-
 int VL53L0X_register(FAR const char *devpath, FAR struct i2c_master_s *i2c, uint8_t addr, uint32_t freq)
 {
   int ret;
@@ -571,17 +636,13 @@ int VL53L0X_register(FAR const char *devpath, FAR struct i2c_master_s *i2c, uint
   ERR_OUT_IF_RET(ret, "reference spad management");
 
   /* Copy the initial values so they can be restored if profiles don't overwrite them */
-  VL53L0x_setup_limit_check(&priv->nx.init.sigmaFinalRange, priv, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE);
-  VL53L0x_setup_limit_check(&priv->nx.init.signalRateFinalRange, priv, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE);
-  VL53L0x_setup_limit_check(&priv->nx.init.rangeIgnoreThreshold, priv, VL53L0X_CHECKENABLE_RANGE_IGNORE_THRESHOLD);
-  priv->nx.init.vcselPeriodPreRange     = priv->Data.DeviceSpecificParameters.PreRangeVcselPulsePeriod;
-  priv->nx.init.vcselPeriodFinalRange   = priv->Data.DeviceSpecificParameters.FinalRangeVcselPulsePeriod;
-  priv->nx.init.measurementTimingBudget = priv->Data.CurrentParameters.MeasurementTimingBudgetMicroSeconds;
+  VL53L0X_safe_current_profile(priv, &priv->nx.init);
 
   //dump_parameters(priv);
 
-  ioctl.val = VL53L0X_PROFILE_DEFAULT | VL53L0X_PROFILE_MODE_SINGLE;
-  ret = VL53L0X_setup_profile(priv, &ioctl);
+  ioctl.profile.id   = VL53L0X_PROFILE_DEFAULT;
+  ioctl.profile.mode = VL53L0X_PROFILE_MODE_SINGLE;
+  ret = VL53L0X_set_profile(priv, &ioctl, 0);
   ERR_OUT_IF_RET(ret, "ioctl");
   ERR_OUT_IF_RET(ioctl.ret, "ioctl ret");
 
