@@ -89,6 +89,15 @@ static void dump_parameters(FAR VL53L0X_DEV priv)
   } else {
     syslog(LOG_ERR, "get device parametes failed: %d\n", ret);
   }
+  {
+    VL53L0X_DeviceModes       mode;
+    VL53L0X_GpioFunctionality func;
+    VL53L0X_InterruptPolarity pol;
+    for (int i=0; i<10; ++i) {
+      ret = VL53L0X_GetGpioConfig(priv, i, &mode, &func, &pol);
+      syslog(LOG_INFO, " - pin%d: %d mode=%d func=%d pol=%d\n", i, ret, mode, func, pol);
+    }
+  }
 }
 
 /****************************************************************************

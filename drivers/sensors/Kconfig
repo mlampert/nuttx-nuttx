@@ -714,11 +714,23 @@ config SENSORS_VL53L0X
 
 if SENSORS_VL53L0X
 
-config SENSORS_VL53L0X_USE_I2C_2V8
+config SENSORS_VL53L0X_I2C_USE_2V8
 	bool "I2C interface at 2.8V"
 	default y
 	---help---
 		If not set I2C is running at 1.8V.
+
+config SENSORS_VL53L0X_INTERRUPT_ENABLE_INIT
+  bool "Enable interrupt during init"
+  default n
+  ---help---
+    Enabling causes the interrupt to fire several times during intialisation.
+
+config SENSORS_VL53L0X_INTERRUPT_POLARITY_LOW
+  bool "Interrupt polarity active low?"
+  default y
+  ---help---
+    Defines the polarity of the interrupt if enabled during init
 
 endif # SENSORS_VL53L0X
 
