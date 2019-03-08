@@ -377,7 +377,7 @@ VL53L0X_Error VL53L0X_DataInit(VL53L0X_DEV Dev)
 
 	/* by default the I2C is running at 1V8 if you want to change it you
 	 * need to include this define at compilation level. */
-#ifdef CONFIG_SENSORS_VL53L0X_USE_I2C_2V8
+#ifdef CONFIG_SENSORS_VL53L0X_I2C_USE_2V8
 	Status = VL53L0X_UpdateByte(Dev,
 		VL53L0X_REG_VHV_CONFIG_PAD_SCL_SDA__EXTSUP_HV,
 		0xFE,
@@ -603,11 +603,24 @@ VL53L0X_Error VL53L0X_StaticInit(VL53L0X_DEV Dev)
 		Status = VL53L0X_load_tuning_settings(Dev, pTuningSettingBuffer);
 
 
+  /* It is not clear to me why ST thinks it's OK to turn on interrupts
+   * during the initialisation period - when the interrupt gets fired
+   * several times by the calibration routines.
+   * */
 	/* Set interrupt config to new sample ready */
 	if (Status == VL53L0X_ERROR_NONE) {
 		Status = VL53L0X_SetGpioConfig(Dev, 0, 0,
+#ifdef CONFIG_SENSORS_VL53L0X_INTERRUPT_ENABLE_INIT
 		VL53L0X_REG_SYSTEM_INTERRUPT_GPIO_NEW_SAMPLE_READY,
-		VL53L0X_INTERRUPTPOLARITY_LOW);
+#else
+	  VL53L0X_REG_SYSTEM_INTERRUPT_GPIO_DISABLED,
+#endif
+#ifdef CONFIG_SENSORS_VL53L0X_INTERRUPT_POLARITY_LOW
+		VL53L0X_INTERRUPTPOLARITY_LOW
+#else
+		VL53L0X_INTERRUPTPOLARITY_HIGH
+#endif
+    );
 	}
 
 	if (Status == VL53L0X_ERROR_NONE) {
