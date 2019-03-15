@@ -132,7 +132,7 @@
 # define HAVE_SDIO
 #endif
 
-#if defined(CONFIG_DISABLE_MOUNTPOINT) || !defined(CONFIG_MMCSD_SDIO)
+#if defined(CONFIG_DISABLE_MOUNTPOINT) || !defined(CONFIG_MMCSD_SDIO) || defined(CONFIG_ARCH_CHIP_STM32F767ZI)
 #  undef HAVE_SDIO
 #endif
 
@@ -153,6 +153,8 @@
 #  else
 #    define SDIO_MINOR 0
 #  endif
+#elif defined(CONFIG_MMCSD_SPI)
+#  define GPIO_SDCARD_CS    (GPIO_PORTD | GPIO_PIN14 | GPIO_OUTPUT | GPIO_PUSHPULL | GPIO_OUTPUT_SET | GPIO_SPEED_50MHz)
 #endif
 
 /* USB OTG FS
@@ -239,7 +241,11 @@ int stm32_dma_alloc_init(void);
  ****************************************************************************/
 
 #ifdef CONFIG_MMCSD
+#ifdef CONFIG_ARCH_CHIP_STM32F767ZI
+int stm32_mmcsd_initialize(int minor);
+#else
 int stm32_sdio_initialize(void);
+#endif
 #endif
 
 /************************************************************************************

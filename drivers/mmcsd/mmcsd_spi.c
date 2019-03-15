@@ -1203,6 +1203,9 @@ static ssize_t mmcsd_read(FAR struct inode *inode, unsigned char *buffer,
 
   /* Single or multiple block read? */
 
+#if 0
+  // ml: For some reason my card does not respond to CMD17, but works like
+  //     a charm when using CMD18.
   if (nsectors == 1)
     {
       /* Send CMD17: Reads a block of the size selected by the SET_BLOCKLEN
@@ -1225,6 +1228,7 @@ static ssize_t mmcsd_read(FAR struct inode *inode, unsigned char *buffer,
         }
     }
   else
+#endif
     {
       /* Send CMD18: Reads a block of the size selected by the SET_BLOCKLEN
        * command and verify that good R1 status is returned
