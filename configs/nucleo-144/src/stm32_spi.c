@@ -185,6 +185,9 @@ void weak_function stm32_spidev_initialize(void)
     {
       stm32_configgpio(g_spigpio[i]);
     }
+#if defined(CONFIG_STM32F7_SPI1) && defined(CONFIG_ARCH_CHIP_STM32F7)
+      stm32_configgpio(GPIO_SDCARD_CS);
+#endif
 }
 
 /****************************************************************************
@@ -213,6 +216,25 @@ void weak_function stm32_spidev_initialize(void)
  ****************************************************************************/
 
 #ifdef CONFIG_STM32F7_SPI1
+#ifdef CONFIG_ARCH_CHIP_STM32F7
+void stm32_spi1select(FAR struct spi_dev_s *dev, uint32_t devid, bool selected)
+{
+  if (devid == SPIDEV_MMCSD(0))
+  {
+    stm32_gpiowrite(GPIO_SDCARD_CS, !selected);
+  }
+}
+
+uint8_t stm32_spi1status(FAR struct spi_dev_s *dev, uint32_t devid)
+{
+  if (devid == SPIDEV_MMCSD(0))
+  {
+    return SPI_STATUS_PRESENT;
+  }
+
+  return 0;
+}
+#else
 void stm32_spi1select(FAR struct spi_dev_s *dev, uint32_t devid, bool selected)
 {
   spiinfo("devid: %d CS: %s\n", (int)devid, selected ? "assert" : "de-assert");
@@ -223,6 +245,7 @@ uint8_t stm32_spi1status(FAR struct spi_dev_s *dev, uint32_t devid)
 {
   return 0;
 }
+#endif
 #endif
 
 #ifdef CONFIG_STM32F7_SPI2

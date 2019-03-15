@@ -142,10 +142,14 @@ int board_app_initialize(uintptr_t arg)
 #endif
 
 #if defined(CONFIG_MMCSD)
+#if defined CONFIG_ARCH_CHIP_STM32F767ZI
+  ret = stm32_mmcsd_initialize(CONFIG_NSH_MMCSDMINOR);
+#else
   /* Configure SDIO */
   /* Initialize the SDIO block driver */
 
   ret = stm32_sdio_initialize();
+#endif
   if (ret != OK)
     {
       ferr("ERROR: Failed to initialize MMC/SD driver: %d\n", ret);

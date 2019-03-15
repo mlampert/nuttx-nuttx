@@ -62,7 +62,11 @@ CSRCS += stm32_adc.c
 endif
 
 ifeq ($(CONFIG_MMCSD),y)
+ifeq ($(CONFIG_ARCH_CHIP_STM32F767ZI),y)
+CSRCS += stm32_mmcsd.c
+else
 CSRCS += stm32_sdio.c
+endif
 endif
 
 ifeq ($(CONFIG_STM32F7_OTGFS),y)
