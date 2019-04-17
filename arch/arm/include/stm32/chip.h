@@ -1218,7 +1218,7 @@
 #  define STM32_NDMA                     1   /* (1) DMA1 (7 channels) */
 #  define STM32_NSPI                     1   /* (1) SPI1 */
 #  define STM32_NI2S                     0   /* (0) No I2S */
-#  define STM32_NUSART                   2   /* (2) USART1-2, no UARTs */
+#  define STM32_NUSART                   3   /* (3) USART1-3, no UARTs */
 #  define STM32_NI2C                     1   /* (1) I2C1 */
 #  define STM32_NCAN                     1   /* (1) CAN1 */
 #  define STM32_NSDIO                    0   /* (0) No SDIO */

@@ -967,6 +967,13 @@ config ARCH_BOARD_NUCLEO_F302R8
 	---help---
 		STMicro Nucleo F302R8 board based on the STMicro STM32F302R8T6 MCU.
 
+config ARCH_BOARD_NUCLEO_F303K8
+	bool "STM32F303 Nucleo F303K8"
+	depends on ARCH_CHIP_STM32F303K8
+	select ARCH_HAVE_LEDS
+	---help---
+		STMicro Nucleo F303K8 board based on the STMicro STM32F303K8T6 MCU.
+
 config ARCH_BOARD_NUCLEO_F303RE
 	bool "STM32F303 Nucleo F303RE"
 	depends on ARCH_CHIP_STM32F303RE
@@ -1857,6 +1864,7 @@ config ARCH_BOARD
 	default "nucleo-f103rb"            if ARCH_BOARD_NUCLEO_F103RB
 	default "nucleo-f207zg"            if ARCH_BOARD_NUCLEO_F207ZG
 	default "nucleo-f302r8"            if ARCH_BOARD_NUCLEO_F302R8
+	default "nucleo-f303k8"            if ARCH_BOARD_NUCLEO_F303K8
 	default "nucleo-f303re"            if ARCH_BOARD_NUCLEO_F303RE
 	default "nucleo-f303ze"            if ARCH_BOARD_NUCLEO_F303ZE
 	default "nucleo-f334r8"            if ARCH_BOARD_NUCLEO_F334R8
@@ -2199,7 +2207,10 @@ endif
 if ARCH_BOARD_NUCLEO_F302R8
 source "configs/nucleo-f302r8/Kconfig"
 endif
-if ARCH_BOARD_NUCLEO_F303RE
+if ARCH_BOARD_NUCLEO_F303K8
+source "configs/nucleo-f303k8/Kconfig"
+endif
+if ARCH_BOARD_NUCLEO_F303K8
 source "configs/nucleo-f303re/Kconfig"
 endif
 if ARCH_BOARD_NUCLEO_F303ZE
