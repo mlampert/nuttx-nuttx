@@ -193,6 +193,15 @@ ifeq ($(CONFIG_SENSORS_VL53L0X),y)
   EXTRA_LIBPATHS += -L "$(TOPDIR)$(DELIM)drivers$(DELIM)sensors$(DELIM)vl53l0x$(DELIM)platform$(DELIM)src"
 endif
 
+ifeq ($(CONFIG_SENSORS_MLX90640),y)
+  CSRCS += MLX90640_API.c
+  CSRCS += MLX90640_nx.c
+  CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(TOPDIR)$(DELIM)drivers$(DELIM)sensors$(DELIM)mlx90640$(DELIM)inc}
+  VPATH += :sensors$(DELIM)mlx90640$(DELIM)src
+  EXTRA_LIBPATHS += -L "$(TOPDIR)$(DELIM)drivers$(DELIM)sensors$(DELIM)mlx90640$(DELIM)src"
+endif
+
+
 endif # CONFIG_I2C
 
 # These drivers depend on SPI support

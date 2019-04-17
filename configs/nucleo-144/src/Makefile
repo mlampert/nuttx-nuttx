@@ -85,4 +85,8 @@ ifeq ($(CONFIG_SENSORS_VL53L0X),y)
 CSRCS += stm32_vl53l0x.c
 endif
 
+ifeq ($(CONFIG_SENSORS_MLX90640),y)
+CSRCS += stm32_mlx90640.c
+endif
+
 include $(TOPDIR)/configs/Board.mk

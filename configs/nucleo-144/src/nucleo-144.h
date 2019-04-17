@@ -289,5 +289,13 @@ int stm32_bbsram_int(void);
 int stm32_vl53l0x_initialize(FAR const char *devpath);
 #endif
 
+/************************************************************************************
+ * Name: stm32_mlx90640_initialize
+ ************************************************************************************/
+
+#ifdef CONFIG_SENSORS_MLX90640
+int stm32_mlx90640_initialize(FAR const char *devpath);
+#endif
+
 #endif /* __ASSEMBLY__ */
 #endif /* __CONFIGS_NUCLEO_144_SRC_NUCLEO_144_H */

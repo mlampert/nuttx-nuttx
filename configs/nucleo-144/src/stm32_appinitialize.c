@@ -177,6 +177,15 @@ int board_app_initialize(uintptr_t arg)
     }
 #endif
 
+#ifdef CONFIG_SENSORS_MLX90640
+  ret = stm32_mlx90640_initialize("/dev/mlx90640");
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: Failed to initialize mlx90640 driver: %d\n", ret);
+      return ret;
+    }
+#endif
+
   UNUSED(ret);
   return OK;
 }

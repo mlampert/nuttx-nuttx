@@ -734,3 +734,10 @@ config SENSORS_VL53L0X_INTERRUPT_POLARITY_LOW
 
 endif # SENSORS_VL53L0X
 
+config SENSORS_MLX90640
+	bool "MLX90640 thermo pixel camera"
+	default n
+	select I2C
+	---help---
+		Enable driver support for the Melexis MLX90640 thermo pixel camera sensor.
+
